@@ -1,0 +1,19 @@
+{
+  "name": "smbr343bot",
+  "version": "1.0.0",
+  "description": "343 checker",
+  "main": "server.js",
+  "scripts": {
+    "start": "nodemon server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Michael Weber",
+  "license": "ISC",
+  "dependencies": {
+    "bluebird": "^3.5.3",
+    "discord.js": "^11.4.2",
+    "dotenv": "^6.2.0",
+    "moment": "^2.23.0",
+    "sqlite3": "^4.0.6"
+  }
+}
