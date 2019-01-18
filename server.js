@@ -5,12 +5,15 @@ const moment = require('moment');
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+//utils
+const boardMaker = require('./utils/boardMaker');
+
 // db classes
 const AppDB = require('./db/AppDB');
 const Users = require('./db/Users');
 const Attempts = require('./db/Attempts');
 
-//instantiate db classes
+// instantiate db classes
 const app = new AppDB('./db/test.db');
 const usersDB = new Users(app);
 const attemptsDB = new Attempts(app);
@@ -41,7 +44,7 @@ const commandChecker = (message) => {
 const commandHandler = (message, command, arg) => {
 	if (command === 'commands') {
 
-		message.channel.send('\`\`\`md\n# Available Commands #\n< !check [username] => returns 343 statistics for [username]\n< !leaderboard => returns server 343 leaderboard\n< !failureboard => returns server 343 failureboard\`\`\`');
+		message.channel.send('\`\`\`md\n# Available Commands #\n< !check [username] => returns 343 statistics for [username]\n< !leaderboard => returns server 343 leaderboard\n< !failureboard => returns server 343 failureboard\n< !last => returns all attempts at the most recent possible 343, including seconds remaining\`\`\`');
 
 	}
 	else if (command === 'stats') {
@@ -61,22 +64,39 @@ const commandHandler = (message, command, arg) => {
 
 	}
 	else if (command === 'leaderboard') {
-
-		message.channel.send('\`\`\`md\n# Leaderboard #\nyeet\`\`\`');
+		attemptsDB.leaderboard()
+			.then(res => {
+				const formattedLeaderboard = boardMaker(res).sort((x, y) => y.success - x.success);
+				console.log(formattedLeaderboard);
+				message.channel.send('\`\`\`md\n# Leaderboard # < Successful 343 attempts > < Successful true 343 attempts >\`\`\`' + 
+					`\n${formattedLeaderboard.map((user, i) => `${i + 1}.) ${user.username} ${'----------------------------------------'.slice(user.username.length)} ${user.success} ${'---------------------------------------------'} ${user.true_post}\n`).join('')}`);})
+			.catch(err => console.log(err));
 
 	}
 	else if (command === 'failureboard') {
-
-		message.channel.send('\`\`\`md\n# Leaderboard #\nyeet\`\`\`');
+		attemptsDB.failureboard()
+			.then(res => {
+				console.log(res)
+				const formattedLeaderboard = boardMaker(res).sort((x, y) => y.success - x.success);
+				// console.log(formattedLeaderboard);
+				message.channel.send('\`\`\`md\n# Failureboard # < Failed 343 attempts > < Failed true 343 attempts >\`\`\`' + 
+					`\n${formattedLeaderboard.map((user, i) => `${i + 1}.) ${user.username} ${'----------------------------------------'.slice(user.username.length)} ${user.success} ${'---------------------------------------------'} ${user.true_post}\n`).join('')}`);})
+			.catch(err => console.log(err));
 
 	}
 	else if (command === 'last') {
 
 		attemptsDB.mostRecentAttempts()
 			.then(res => {
-				message.channel.send(`***Results for the last 343:***\n${res.map(attempt => {
-					return `${attempt.username} ${attempt.success ? 'succeeded' : 'failed' } in posting 343 on time by ${attempt.seconds_left} seconds! It was ${!attempt.true_post ? '*not*' : null } a true local 343 for them.\n`
-				}).join('')}`)
+				if (res.length > 0) {
+					message.channel.send('\`\`\`md\n# Last 343 results #\`\`\`' + `\n${res.map(attempt => {
+						return `__${attempt.username}__ ${attempt.success ? 'succeeded' : 'failed' } in posting 343 on time by ${attempt.seconds_left} seconds! It was ${!attempt.true_post ? '*not*' : null } a true 343 attempt.\n`
+					}).join('')}`)
+				}
+				else {
+					const emoji = client.emojis.find(v => v.name === 'fendywink').toString();
+					message.channel.send('\`\`\`md\n# Last 343 results #\`\`\`' + `\n${emoji} Nobody attempted the last 343! ${emoji}`);
+				}
 			})
 			.catch(err => console.log(err));
 
