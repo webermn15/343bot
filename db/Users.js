@@ -15,6 +15,12 @@ class Users {
 		)
 	}
 
+	setUserEmoji(emoji, user_id) {
+		return this.db.run(
+			`UPDATE users SET emoji = ? WHERE user_id = ?`, [emoji, user_id]
+		)
+	}
+
 }
 
 module.exports = Users;

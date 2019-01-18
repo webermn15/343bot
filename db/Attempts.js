@@ -11,25 +11,25 @@ class Attempts {
 
 	mostRecentAttempts() {
 		return this.db.all(
-			`SELECT username, date_posted, seconds_left, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE date_posted >= datetime('now','-1 hour')`
+			`SELECT username, emoji, date_posted, seconds_left, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE date_posted >= datetime('now','-1 hour')`
 		)
 	}
 
 	allAttemptsByUser(user_id) {
 		return this.db.all(
-			`SELECT username, time_zone, date_posted, seconds_left, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE users.user_id = ?`, [user_id]
+			`SELECT username, emoji, time_zone, date_posted, seconds_left, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE users.user_id = ?`, [user_id]
 		)
 	}
 
 	leaderboard() {
 		return this.db.all(
-			`SELECT username, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE success = 1`
+			`SELECT username, emoji, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE success = 1`
 		)
 	}
 
 	failureboard() {
 		return this.db.all(
-			`SELECT username, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE success = 0`
+			`SELECT username, emoji, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE success = 0`
 		)
 	}
 	

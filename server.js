@@ -22,7 +22,7 @@ const attemptsDB = new Attempts(app);
 // breaks down commands and checks for validity
 const commandChecker = (message) => {
 	// array of available commands
-	const commands = ['commands', 'stats', 'leaderboard', 'failureboard', 'last']
+	const commands = ['commands', 'stats', 'set_emoji', 'leaderboard', 'failureboard', 'last']
 
 	// remove leading `!`
 	const cleanCommand = message.content.slice(1);
@@ -36,19 +36,17 @@ const commandChecker = (message) => {
 		return commandAndArg.length === 1 ? commandHandler(message, commandAndArg[0]) : commandHandler(message, commandAndArg[0], commandAndArg[1])
 	} 
 	else {
-		return `Command '${commandAndArg[0]}' not recognized. Type !commandlist to see available commands.`
+		message.channel.send(`Command '${commandAndArg[0]}' not recognized. Type !commands to see available commands.`);
 	}
 }
 
 // queries data and assembles response
 const commandHandler = (message, command, arg) => {
 	if (command === 'commands') {
-
-		message.channel.send('\`\`\`md\n# Available Commands #\n< !check [username] => returns 343 statistics for [username]\n< !leaderboard => returns server 343 leaderboard\n< !failureboard => returns server 343 failureboard\n< !last => returns all attempts at the most recent possible 343, including seconds remaining\`\`\`');
+		message.channel.send('\`\`\`md\n# Available Commands #\n< !stats => returns your 343 statistics\n< !set_emoji [emoji] => associates an [emoji] with your results, or removes one when called with no argument\n< !leaderboard => returns server 343 leaderboard\n< !failureboard => returns server 343 failureboard\n< !last => returns all attempts at the most recent possible 343, including seconds remaining\`\`\`');
 
 	}
 	else if (command === 'stats') {
-
 		usersDB.getUserIdFromUsername(arg)
 			.then(user => {
 				attemptsDB.allAttemptsByUser(user.user_id)
@@ -59,18 +57,53 @@ const commandHandler = (message, command, arg) => {
 					.catch(err => console.log(err))
 			})
 			.catch(err => {
-				message.channel.send(`${err.message}`)
+				console.log(err)
+				message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.`)
 			});
 
+	}
+	else if (command === 'set_emoji') {
+		const id = message.author.id.toString();
+		if (!arg) {
+			usersDB.setUserEmoji(null, id)
+				.then(res => {
+					message.channel.send(`Emoji removed.`);
+				})
+				.catch(err => {
+					console.log(err)
+					message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.`)
+				});
+		}
+		else {
+			const isEmoji = client.emojis.find(v => v.name === arg);
+			console.log(isEmoji);
+			if (isEmoji) {
+				const emoji = isEmoji.toString();
+				usersDB.setUserEmoji(emoji, id)
+					.then(res => {
+						message.channel.send(`Emoji set to ${emoji}`);
+					})
+					.catch(err => {
+						console.log(err)
+						message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.`)
+					});
+			}
+			else {
+				message.channel.send(`That's not a recognized emoji! (Capitalization matters)`)
+			}
+		}
 	}
 	else if (command === 'leaderboard') {
 		attemptsDB.leaderboard()
 			.then(res => {
 				const formattedLeaderboard = boardMaker(res).sort((x, y) => y.success - x.success);
 				console.log(formattedLeaderboard);
-				message.channel.send('\`\`\`md\n# Leaderboard # < Successful 343 attempts > < Successful true 343 attempts >\`\`\`' + 
-					`\n${formattedLeaderboard.map((user, i) => `${i + 1}.) ${user.username} ${'----------------------------------------'.slice(user.username.length)} ${user.success} ${'---------------------------------------------'} ${user.true_post}\n`).join('')}`);})
-			.catch(err => console.log(err));
+				message.channel.send('\`\`\`md\n<Leaderboard < Successful 343 attempts > < Successful true 343 attempts >\`\`\`' + 
+					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} ${user.username} ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'---------------------------------------------'} ${user.true_post}\n\n`).join('')}`);})
+			.catch(err => {
+				console.log(err)
+				message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.`)
+			});
 
 	}
 	else if (command === 'failureboard') {
@@ -78,19 +111,21 @@ const commandHandler = (message, command, arg) => {
 			.then(res => {
 				console.log(res)
 				const formattedLeaderboard = boardMaker(res).sort((x, y) => y.success - x.success);
-				// console.log(formattedLeaderboard);
-				message.channel.send('\`\`\`md\n# Failureboard # < Failed 343 attempts > < Failed true 343 attempts >\`\`\`' + 
-					`\n${formattedLeaderboard.map((user, i) => `${i + 1}.) ${user.username} ${'----------------------------------------'.slice(user.username.length)} ${user.success} ${'---------------------------------------------'} ${user.true_post}\n`).join('')}`);})
-			.catch(err => console.log(err));
+				console.log(formattedLeaderboard);
+				message.channel.send('\`\`\`md\n<Failureboard < Failed 343 attempts > < Failed true 343 attempts >\`\`\`' + 
+					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} ${user.username} ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'---------------------------------------------'} ${user.true_post}\n\n`).join('')}`);})
+			.catch(err => {
+				console.log(err)
+				message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.`)
+			});
 
 	}
 	else if (command === 'last') {
-
 		attemptsDB.mostRecentAttempts()
 			.then(res => {
 				if (res.length > 0) {
-					message.channel.send('\`\`\`md\n# Last 343 results #\`\`\`' + `\n${res.map(attempt => {
-						return `__${attempt.username}__ ${attempt.success ? 'succeeded' : 'failed' } in posting 343 on time by ${attempt.seconds_left} seconds! It was ${!attempt.true_post ? '*not*' : null } a true 343 attempt.\n`
+					message.channel.send('\`\`\`md\n# Last 343 results #\`\`\`' + `${res.map(attempt => {
+						return `***${attempt.username}*** ${attempt.success ? 'succeeded' : 'failed' } in posting 343 on time by ${attempt.seconds_left} seconds! It was ${!attempt.true_post ? '*not*' : null } a true 343 attempt${attempt.true_post ? '!' : '.'}\n`
 					}).join('')}`)
 				}
 				else {
@@ -98,13 +133,17 @@ const commandHandler = (message, command, arg) => {
 					message.channel.send('\`\`\`md\n# Last 343 results #\`\`\`' + `\n${emoji} Nobody attempted the last 343! ${emoji}`);
 				}
 			})
-			.catch(err => console.log(err));
+			.catch(err => {
+				console.log(err)
+				message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.`)
+			});
 
 	}
 }
 
 
 client.on('ready', () => {
+	debugger;
 	console.log('You are not prepared.');
 });
 

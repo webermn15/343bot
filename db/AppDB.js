@@ -19,7 +19,7 @@ class AppDB {
 					reject(err);
 				}
 				else {
-					resolve({id: this.lastID});
+					resolve(`success`);
 				}
 			})
 		})

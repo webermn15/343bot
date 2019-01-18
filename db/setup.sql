@@ -1,5 +1,5 @@
 CREATE TABLE attempts(poster TEXT, date_posted TEXT, seconds_left INTEGER, success BOOLEAN, true_post BOOLEAN, FOREIGN KEY(poster) REFERENCES user(user_id));
-CREATE TABLE users(user_id TEXT PRIMARY KEY, username TEXT, time_zone TEXT, unique(user_id));
+CREATE TABLE users(user_id TEXT PRIMARY KEY, username TEXT, emoji TEXT, time_zone TEXT, unique(user_id));
 
 /* INNER JOIN syntax for sqlite */
 SELECT username, time_zone, date_posted, seconds_left, true_post FROM attempts INNER JOIN users ON users.user_id = attempts.poster;
