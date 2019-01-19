@@ -13,7 +13,6 @@ const uuidv4 = require('uuid/v4');
 const boardMaker = require('./utils/boardMaker');
 const statMaker = require('./utils/statMaker');
 const limitSpam = new Discord.Collection();
-
 // setup winston logger
 const logger = winston.createLogger({
     level: 'info',
@@ -28,6 +27,7 @@ const logger = winston.createLogger({
       level: 'info'
     })]
 });
+
 
 // db classes
 const AppDB = require('./db/AppDB');
