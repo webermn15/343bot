@@ -23,13 +23,13 @@ class Attempts {
 
 	leaderboard() {
 		return this.db.all(
-			`SELECT username, emoji, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE success = 1`
+			`SELECT username, emoji, seconds_left, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE success = 1`
 		)
 	}
 
 	failureboard() {
 		return this.db.all(
-			`SELECT username, emoji, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE success = 0`
+			`SELECT username, emoji, seconds_left, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE success = 0`
 		)
 	}
 	

@@ -9,9 +9,9 @@ class Users {
 		)
 	}
 
-	getUserIdFromUsername(username) {
-		return this.db.get(
-			`SELECT * FROM users WHERE username = ?`, [username]
+	getUserStats(id) {
+		return this.db.all(
+			`SELECT username, emoji, time_zone, seconds_left, success, true_post FROM users INNER JOIN attempts ON attempts.poster=users.user_id WHERE attempts.poster = ?`, [id]
 		)
 	}
 

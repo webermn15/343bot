@@ -7,6 +7,8 @@ const client = new Discord.Client();
 
 //utils
 const boardMaker = require('./utils/boardMaker');
+const statMaker = require('./utils/statMaker');
+const limitSpam = new Discord.Collection();
 
 // db classes
 const AppDB = require('./db/AppDB');
@@ -41,20 +43,24 @@ const commandChecker = (message) => {
 }
 
 // queries data and assembles response
+// this is mostly if else statements and really annoying template literal formatting
 const commandHandler = (message, command, arg) => {
 	if (command === 'commands') {
 		message.channel.send('\`\`\`md\n# Available Commands #\n< !stats => returns your 343 statistics\n< !set_emoji [emoji] => associates an [emoji] with your results, or removes one when called with no argument\n< !leaderboard => returns server 343 leaderboard\n< !failureboard => returns server 343 failureboard\n< !last => returns all attempts at the most recent possible 343, including seconds remaining\`\`\`');
 
 	}
 	else if (command === 'stats') {
-		usersDB.getUserIdFromUsername(arg)
-			.then(user => {
-				attemptsDB.allAttemptsByUser(user.user_id)
-					.then(stats => {
-						console.log(stats)
-						message.channel.send(`${arg} has posted 343 at 344 ${stats.length} times. Yikes.`)
-					})
-					.catch(err => console.log(err))
+		const id = message.author.id.toString();
+		usersDB.getUserStats(id)
+			.then(res => {
+				const user = statMaker(res)[0];
+				const dame = client.emojis.find(v => v.name === 'TheReal5').toString();
+				const scruntgasm = client.emojis.find(v => v.name === 'scruntGASM').toString();
+				const notLikeDame = client.emojis.find(v => v.name === 'NotLikeDame').toString();
+				const monkaS = client.emojis.find(v => v.name === 'monkaS').toString();
+				const pog = client.emojis.find(v => v.name === 'Pog').toString();
+				message.channel.send('\`\`\`md\n#343 Stats\`\`\`' + 
+					`${user.emoji ? user.emoji : ''} **${user.username}** \n:map: **Time Zone** ${user.time_zone}\n${dame} **Total 343s** -- ${user.success}\n${scruntgasm} **Avg seconds left in 343** -- ${user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length}s\n${notLikeDame} **Total 344s** -- ${user.failed}\n${monkaS} **Avg seconds 343 missed by** -- ${user.seconds_missed.reduce((x, y) => x + y)/user.seconds_missed.length}s\n${pog} **True 343s** -- ${user.true_post}`)
 			})
 			.catch(err => {
 				console.log(err)
@@ -76,7 +82,6 @@ const commandHandler = (message, command, arg) => {
 		}
 		else {
 			const isEmoji = client.emojis.find(v => v.name === arg);
-			console.log(isEmoji);
 			if (isEmoji) {
 				const emoji = isEmoji.toString();
 				usersDB.setUserEmoji(emoji, id)
@@ -97,9 +102,8 @@ const commandHandler = (message, command, arg) => {
 		attemptsDB.leaderboard()
 			.then(res => {
 				const formattedLeaderboard = boardMaker(res).sort((x, y) => y.success - x.success);
-				console.log(formattedLeaderboard);
-				message.channel.send('\`\`\`md\n<Leaderboard < Successful 343 attempts > < Successful true 343 attempts >\`\`\`' + 
-					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} ${user.username} ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'---------------------------------------------'} ${user.true_post}\n\n`).join('')}`);})
+				message.channel.send('\`\`\`md\n<Leaderboard < Successful attempts >< Successful true attempts >< Avg secs left >\`\`\`' + 
+					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} **${user.username}** ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'-----------------------------------'} ${user.true_post} ${'--------------------'} ${user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length}s \n\n`).join('')}`);})
 			.catch(err => {
 				console.log(err)
 				message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.`)
@@ -109,11 +113,9 @@ const commandHandler = (message, command, arg) => {
 	else if (command === 'failureboard') {
 		attemptsDB.failureboard()
 			.then(res => {
-				console.log(res)
 				const formattedLeaderboard = boardMaker(res).sort((x, y) => y.success - x.success);
-				console.log(formattedLeaderboard);
-				message.channel.send('\`\`\`md\n<Failureboard < Failed 343 attempts > < Failed true 343 attempts >\`\`\`' + 
-					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} ${user.username} ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'---------------------------------------------'} ${user.true_post}\n\n`).join('')}`);})
+				message.channel.send('\`\`\`md\n<Failureboard < Failed attempts >< Failed true attempts >< Avg secs missed by >\`\`\`' + 
+					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} **${user.username}** ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'-----------------------------------'} ${user.true_post} ${'--------------------'} ${user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length}s \n\n`).join('')}`);})
 			.catch(err => {
 				console.log(err)
 				message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.`)
@@ -124,13 +126,15 @@ const commandHandler = (message, command, arg) => {
 		attemptsDB.mostRecentAttempts()
 			.then(res => {
 				if (res.length > 0) {
-					message.channel.send('\`\`\`md\n# Last 343 results #\`\`\`' + `${res.map(attempt => {
-						return `***${attempt.username}*** ${attempt.success ? 'succeeded' : 'failed' } in posting 343 on time by ${attempt.seconds_left} seconds! It was ${!attempt.true_post ? '*not*' : null } a true 343 attempt${attempt.true_post ? '!' : '.'}\n`
+					const evoMindFlwns = client.emojis.find(v => v.name === 'evoMindFlwns').toString();
+					const pepeHands = client.emojis.find(v => v.name === 'PepeHands').toString();
+					message.channel.send('\`\`\`md\n#Last 343 results\`\`\`' + `${res.map(attempt => {
+						return `${attempt.emoji ? attempt.emoji : ''} **${attempt.username}** ${attempt.success ? 'succeeded' : 'failed' } in posting 343 on time by ${attempt.seconds_left} seconds! ${attempt.success ? evoMindFlwns : pepeHands} It was ${!attempt.true_post ? 'not' : null } a true 343 attempt${attempt.true_post ? '!' : '.'}\n`
 					}).join('')}`)
 				}
 				else {
-					const emoji = client.emojis.find(v => v.name === 'fendywink').toString();
-					message.channel.send('\`\`\`md\n# Last 343 results #\`\`\`' + `\n${emoji} Nobody attempted the last 343! ${emoji}`);
+					const emoji = client.emojis.find(v => v.name === 'hlizard').toString();
+					message.channel.send('\`\`\`md\n#Last 343 results\`\`\`' + `\n${emoji} Nobody attempted the last 343! ${emoji}`);
 				}
 			})
 			.catch(err => {
@@ -143,18 +147,19 @@ const commandHandler = (message, command, arg) => {
 
 
 client.on('ready', () => {
-	debugger;
 	console.log('You are not prepared.');
 });
 
 
 client.on('message', (message) => {
 	const minutePosted = message.createdAt.getMinutes() === 43 || message.createdAt.getMinutes() === 44 ? message.createdAt.getMinutes() : null;
+	const poster = message.author.id.toString();
 
 	// log all attempted 343 posts at 343 and 344
-	if (message.content === '343') {
+	if (message.content === '343' && minutePosted && !limitSpam.has(poster)) {
+		limitSpam.set(poster, 120000);
+		setTimeout(() => limitSpam.delete(poster), 120000);
 		const success = minutePosted === 43 ? true : false;
-		const poster = message.author.id;
 		const username = message.author.username;
 		const time_zone = message.createdAt.toString().split(' ').slice(-2).join(' ');
 		const date_posted = moment.utc(message.createdAt.toISOString()).format('YYYY-MM-DD HH:MM:SS')
