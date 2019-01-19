@@ -1,7 +1,0 @@
-2019-01-19T01:06:54.975Z info: Discord client ready
-2019-01-19T01:07:02.395Z error: TypeError: Cannot read property 'emoji' of undefined , id:c37cf650-198d-4498-9830-929dd37323d8
-2019-01-19T01:07:38.670Z info: Discord client ready
-2019-01-19T01:07:42.170Z error: TypeError: Cannot read property 'emoji' of undefined , id:f900db34-d633-400e-851d-0b88581f2a0a
-2019-01-19T01:11:01.446Z info: Discord client ready
-2019-01-19T01:11:08.257Z error: TypeError: Cannot read property 'emoji' of undefined , id:a1f4dfbf-f403-4c22-9fa7-2e6eb4a2bdf3
-2019-01-19T01:22:40.655Z info: Discord client ready
