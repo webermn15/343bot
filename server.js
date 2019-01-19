@@ -6,8 +6,10 @@ const Discord = require('discord.js');
 const client = new Discord.Client();
 
 // utils
+// for logging
 const winston = require('winston');
 const uuidv4 = require('uuid/v4');
+// for handling specific functions
 const boardMaker = require('./utils/boardMaker');
 const statMaker = require('./utils/statMaker');
 const limitSpam = new Discord.Collection();
@@ -38,6 +40,9 @@ const usersDB = new Users(app);
 const attemptsDB = new Attempts(app);
 
 
+// emoji query HoF
+const getEmoji = (emj) => client.emojis.find(v => v.name === emj).toString();
+
 // breaks down commands and checks for validity
 const commandChecker = (message) => {
 	// array of available commands
@@ -55,7 +60,7 @@ const commandChecker = (message) => {
 		return commandAndArg.length === 1 ? commandHandler(message, commandAndArg[0]) : commandHandler(message, commandAndArg[0], commandAndArg[1])
 	} 
 	else {
-		const miguel = client.emojis.find(v => v.name === 'Miguel').toString();
+		const miguel = getEmoji('Miguel');
 		message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n${miguel} Command '**${commandAndArg[0]}**' not recognized. Type **!commands** to see available commands.`);
 	}
 }
@@ -72,18 +77,18 @@ const commandHandler = (message, command, arg) => {
 		usersDB.getUserStats(id)
 			.then(res => {
 				const user = statMaker(res)[0];
-				const dame = client.emojis.find(v => v.name === 'TheReal5').toString();
-				const scruntgasm = client.emojis.find(v => v.name === 'scruntGASM').toString();
-				const notLikeDame = client.emojis.find(v => v.name === 'NotLikeDame').toString();
-				const monkaS = client.emojis.find(v => v.name === 'monkaS').toString();
-				const pog = client.emojis.find(v => v.name === 'Pog').toString();
+				const dame = getEmoji('TheReal5');
+				const scruntgasm = getEmoji('scruntGASM');
+				const notLikeDame = getEmoji('NotLikeDame');
+				const monkaS = getEmoji('monkaS');
+				const pog = getEmoji('Pog');
 				message.channel.send('\`\`\`md\n#343 Stats\`\`\`' + 
 					`${user.emoji ? user.emoji : ''} **${user.username}** \n:map: **Time Zone** ${user.time_zone}\n${dame} **Total 343s** -- ${user.success}\n${scruntgasm} **Avg seconds left in 343** -- ${user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length}s\n${notLikeDame} **Total 344s** -- ${user.failed}\n${monkaS} **Avg seconds 343 missed by** -- ${user.seconds_missed.reduce((x, y) => x + y)/user.seconds_missed.length}s\n${pog} **True 343s** -- ${user.true_post}`);
 			})
 			.catch(err => {
 				errId = uuidv4();
 				logger.log('error', `${err} , id:${errId}`);
-				const sponge = client.emojis.find(v => v.name === 'spongebob_with_a_gun').toString();
+				const sponge = getEmoji('spongebob_with_a_gun');
 				message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n${sponge} **There was an error retrieving your stats.**\nYou may not have any 343 data available!! If you think this is an error please message Webs, I'm just doing my job.\n\nid: ${errId}`)
 			});
 
@@ -149,15 +154,15 @@ const commandHandler = (message, command, arg) => {
 		attemptsDB.mostRecentAttempts()
 			.then(res => {
 				if (res.length > 0) {
-					const evoMindFlwns = client.emojis.find(v => v.name === 'evoMindFlwns').toString();
-					const pepeHands = client.emojis.find(v => v.name === 'PepeHands').toString();
+					const evoMindFlwns = getEmoji('evoMindFlwns');
+					const pepeHands = getEmoji('PepeHands');
 					message.channel.send('\`\`\`md\n#Last 343 results\`\`\`' + `${res.map(attempt => {
 						return `${attempt.emoji ? attempt.emoji : ''} **${attempt.username}** ${attempt.success ? 'succeeded' : 'failed' } in posting 343 on time by ${attempt.seconds_left} seconds! ${attempt.success ? evoMindFlwns : pepeHands} It was ${!attempt.true_post ? 'not' : null } a true 343 attempt${attempt.true_post ? '!' : '.'}\n`
 					}).join('')}`)
 				}
 				else {
-					const emoji = client.emojis.find(v => v.name === 'hlizard').toString();
-					message.channel.send('\`\`\`md\n#Last 343 results\`\`\`' + `\n${emoji} Nobody attempted the last 343! ${emoji}`);
+					const emoji = getEmoji('hlizard');
+					message.channel.send('\`\`\`md\n#Last 343 results\`\`\`' + `\n${emoji} **Nobody attempted the last 343!** ${emoji}`);
 				}
 			})
 			.catch(err => {
@@ -204,13 +209,11 @@ client.on('message', (message) => {
 				errId = uuidv4();
 				logger.log('error', `${err} , id:${errId}`);
 			});
-
-		message.channel.send(`posted at ${message.createdAt.toString()} local time, ${message.createdAt.toUTCString()} UTC time`);
 	}
 
-	if (message.content.startsWith('!')) {
-		commandChecker(message);
-	}
+	// if (message.content.startsWith('!')) {
+	// 	commandChecker(message);
+	// }
 });
 
 client.on('reconnecting', () => {
