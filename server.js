@@ -29,7 +29,7 @@ const logger = winston.createLogger({
 });
 
 
-// db classes
+// db class declarations
 const AppDB = require('./db/AppDB');
 const Users = require('./db/Users');
 const Attempts = require('./db/Attempts');
