@@ -35,7 +35,8 @@ const Users = require('./db/Users');
 const Attempts = require('./db/Attempts');
 
 // instantiate db classes
-const app = new AppDB('./db/test.db');
+const sqliteDB = './db/live.db';
+const app = new AppDB(sqliteDB);
 const usersDB = new Users(app);
 const attemptsDB = new Attempts(app);
 
