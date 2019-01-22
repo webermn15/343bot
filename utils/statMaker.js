@@ -5,6 +5,7 @@ module.exports = statMaker = arr => {
       if (curr.success) {
         curr.seconds_left = [curr.seconds_left];
         curr.seconds_missed = []
+        curr.failed = 0;
       }
       else {
         curr.seconds_missed = [curr.seconds_left];
