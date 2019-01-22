@@ -186,7 +186,7 @@ client.on('message', (message) => {
 	const minutePosted = message.createdAt.getMinutes() === 43 || message.createdAt.getMinutes() === 44 ? message.createdAt.getMinutes() : null;
 	const poster = message.author.id.toString();
 
-	// log all attempted 343 posts at 343 and 344
+	// logging all attempted 343 posts at 343 and 344
 	if (message.content === '343' && minutePosted && !limitSpam.has(poster)) {
 		limitSpam.set(poster, 120000);
 		setTimeout(() => limitSpam.delete(poster), 120000);
