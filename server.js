@@ -1,4 +1,4 @@
-require('dotenv').config()
+require('dotenv').config();
 const sqlite3 = require('sqlite3').verbose();
 const Promise = require('bluebird');
 const moment = require('moment');
@@ -29,7 +29,7 @@ const logger = winston.createLogger({
 });
 
 
-// db class declarations
+// db class declarations 
 const AppDB = require('./db/AppDB');
 const Users = require('./db/Users');
 const Attempts = require('./db/Attempts');
@@ -43,6 +43,8 @@ const attemptsDB = new Attempts(app);
 
 // emoji query HoF
 const getEmoji = (emj) => client.emojis.find(v => v.name === emj).toString();
+// rounding to 2 decimals HoF
+const roundResult = (num) => Math.round(num * 100) / 100;
 
 // breaks down commands and checks for validity
 const commandChecker = (message) => {
@@ -58,7 +60,7 @@ const commandChecker = (message) => {
 	
 	// conditional to hand invalid commands
 	if (commands.includes(commandAndArg[0])) {
-		return commandAndArg.length === 1 ? commandHandler(message, commandAndArg[0]) : commandHandler(message, commandAndArg[0], commandAndArg[1])
+		return commandAndArg.length === 1 ? commandHandler(message, commandAndArg[0]) : commandHandler(message, commandAndArg[0], commandAndArg[1]);
 	} 
 	else {
 		const miguel = getEmoji('Miguel');
@@ -84,13 +86,13 @@ const commandHandler = (message, command, arg) => {
 				const monkaS = getEmoji('monkaS');
 				const pog = getEmoji('Pog');
 				message.channel.send('\`\`\`md\n#343 Stats\`\`\`' + 
-					`${user.emoji ? user.emoji : ''} **${user.username}** \n:map: **Time Zone** ${user.time_zone}\n${dame} **Total 343s** -- ${user.success}\n${scruntgasm} **Avg seconds left in 343** -- ${user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length}s\n${notLikeDame} **Total 344s** -- ${user.failed}\n${monkaS} **Avg seconds 343 missed by** -- ${user.seconds_missed.reduce((x, y) => x + y)/user.seconds_missed.length}s\n${pog} **True 343s** -- ${user.true_post}`);
+					`${user.emoji ? user.emoji : ''} **${user.username}** \n${dame} **Total 343s** -- ${user.success}\n${scruntgasm} **Avg seconds left in 343** -- ${user.seconds_left.length > 0 ? roundResult(user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length) : 'User has not hit any 343'}s\n${notLikeDame} **Total 344s** -- ${user.failed}\n${monkaS} **Avg seconds 343 missed by** -- ${user.seconds_missed.length > 0 ? roundResult(user.seconds_missed.reduce((x, y) => x + y)/user.seconds_missed.length) : 'User has not hit any 344'}s\n`);
 			})
 			.catch(err => {
 				errId = uuidv4();
 				logger.log('error', `${err} , id:${errId}`);
 				const sponge = getEmoji('spongebob_with_a_gun');
-				message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n${sponge} **There was an error retrieving your stats.**\nYou may not have any 343 data available!! If you think this is an error please message Webs, I'm just doing my job.\n\nid: ${errId}`)
+				message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n${sponge} **There was an error retrieving your stats.**\nYou may not have any 343 data available!! If you think this is an error please message webs, I'm just doing my job.\n\nid: ${errId}`);
 			});
 
 	}
@@ -104,7 +106,7 @@ const commandHandler = (message, command, arg) => {
 				.catch(err => {
 					errId = uuidv4();
 					logger.log('error', `${err} , id:${errId}`);
-					message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.\nid: ${errId}`)
+					message.channel.send(`**Something went wrong!** I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
 				});
 		}
 		else {
@@ -118,11 +120,11 @@ const commandHandler = (message, command, arg) => {
 					.catch(err => {
 						errId = uuidv4();
 						logger.log('error', `${err} , id:${errId}`);
-						message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.\nid: ${errId}`)
+						message.channel.send(`**Something went wrong!** I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
 					});
 			}
 			else {
-				message.channel.send('\`\`\`md\n#Error\`\`\`' + `**That's not a recognized emoji!** (Capitalization matters)`)
+				message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n**That's not a recognized server emoji!**\n(Capitalization matters, this server's emojis only, no colons wrapping the emoji name)`);
 			}
 		}
 	}
@@ -130,24 +132,25 @@ const commandHandler = (message, command, arg) => {
 		attemptsDB.leaderboard()
 			.then(res => {
 				const formattedLeaderboard = boardMaker(res).sort((x, y) => y.success - x.success);
-				message.channel.send('\`\`\`md\n<Leaderboard < Successful attempts >< Successful true attempts >< Avg secs left >\`\`\`' + 
-					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} **${user.username}** ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'-----------------------------------'} ${user.true_post} ${'--------------------'} ${user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length}s \n\n`).join('')}`);})
+				message.channel.send('\`\`\`md\n<Leaderboard < Successful attempts > < Avg secs left >\`\`\`' + 
+					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} **${user.username}** ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'--------------------'} ${user.seconds_left.length > 0 ? roundResult(user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length) : 'User has not hit any 343'}s \n\n`).join('')}`);})
 			.catch(err => {
-				logger.log('error', err);
-				message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.`)
+				errId = uuidv4();
+				logger.log('error', `${err} , id:${errId}`);
+				message.channel.send(`**Something went wrong!** I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
 			});
 
 	}
 	else if (command === 'failureboard') {
 		attemptsDB.failureboard()
 			.then(res => {
-				const formattedLeaderboard = boardMaker(res).sort((x, y) => y.success - x.success);
-				message.channel.send('\`\`\`md\n<Failureboard < Failed attempts >< Failed true attempts >< Avg secs missed by >\`\`\`' + 
-					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} **${user.username}** ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'-----------------------------------'} ${user.true_post} ${'--------------------'} ${user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length}s \n\n`).join('')}`);})
+				const formattedLeaderboard = boardMaker(res, true).sort((x, y) => y.success - x.success);
+				message.channel.send('\`\`\`md\n<Failureboard < Failed attempts > < Avg secs missed by >\`\`\`' + 
+					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} **${user.username}** ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'--------------------'} ${user.seconds_left.length > 0 ? roundResult(user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length) : 'User has not hit any 344'}s \n\n`).join('')}`);})
 			.catch(err => {
 				errId = uuidv4();
 				logger.log('error', `${err} , id:${errId}`);
-				message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.\nid: ${errId}`)
+				message.channel.send(`Something went wrong! I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
 			});
 
 	}
@@ -158,7 +161,7 @@ const commandHandler = (message, command, arg) => {
 					const evoMindFlwns = getEmoji('evoMindFlwns');
 					const pepeHands = getEmoji('PepeHands');
 					message.channel.send('\`\`\`md\n#Last 343 results\`\`\`' + `${res.map(attempt => {
-						return `${attempt.emoji ? attempt.emoji : ''} **${attempt.username}** ${attempt.success ? 'succeeded' : 'failed' } in posting 343 on time by ${attempt.seconds_left} seconds! ${attempt.success ? evoMindFlwns : pepeHands} It was ${!attempt.true_post ? 'not' : null } a true 343 attempt${attempt.true_post ? '!' : '.'}\n`
+						return `${attempt.emoji ? attempt.emoji : ''} **${attempt.username}** ${attempt.success ? 'made' : 'missed' } 343 by ${attempt.seconds_left} seconds${attempt.success ? '! ' : '... '} ${attempt.success ? evoMindFlwns : pepeHands}\n`
 					}).join('')}`)
 				}
 				else {
@@ -169,7 +172,7 @@ const commandHandler = (message, command, arg) => {
 			.catch(err => {
 				errId = uuidv4();
 				logger.log('error', `${err} , id:${errId}`);
-				message.channel.send(`Something went wrong! I dunno, ask Webs, I'm just a bot.\nid: ${errId}`)
+				message.channel.send(`Something went wrong! I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
 			});
 
 	}
@@ -177,7 +180,7 @@ const commandHandler = (message, command, arg) => {
 
 
 client.on('ready', () => {
-	console.log('Discord client ready')
+	console.log('Discord client ready');
 	logger.log('info', 'Discord client ready');
 });
 
@@ -212,9 +215,9 @@ client.on('message', (message) => {
 			});
 	}
 
-	// if (message.content.startsWith('!')) {
-	// 	commandChecker(message);
-	// }
+	if (message.content.startsWith('!')) {
+		commandChecker(message);
+	}
 });
 
 client.on('reconnecting', () => {

@@ -11,7 +11,7 @@ class Attempts {
 
 	mostRecentAttempts() {
 		return this.db.all(
-			`SELECT username, emoji, date_posted, seconds_left, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE date_posted >= datetime('now','-1 hour')`
+			`SELECT username, emoji, date_posted, seconds_left, success, true_post FROM attempts INNER JOIN users ON users.user_id=attempts.poster WHERE date_posted >= datetime('now','-1.5 hours')`
 		)
 	}
 
