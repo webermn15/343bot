@@ -4,7 +4,7 @@ const Users = require('./Users');
 const Attempts = require('./Attempts');
 
 // db file
-const sqliteDB = './db/test.db';
+const sqliteDB = process.env.PROD_ENV ? './db/live.db' : './db/test.db';
 
 // instantiate db classes
 const app = new AppDB(sqliteDB);

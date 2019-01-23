@@ -4,8 +4,8 @@
   "description": "343 checker",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "debug": "nodemon inspect server.js",
+    "start": "PROD_ENV=true node server.js",
+    "start:dev": "PROD_ENV=false nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Michael Weber",

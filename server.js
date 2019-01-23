@@ -6,6 +6,9 @@ const moment = require('moment');
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+// export client for utils that need it... hmmm idk if good
+module.exports = client;
+
 // db imports
 const { attemptsDB, usersDB } = require('./db');
 
@@ -16,19 +19,18 @@ const { logger, getEmoji } = require('./utils');
 const limitSpam = new Discord.Collection();
 const commandList = new Discord.Collection();
 
-// import and format commands
+// import and format commands into command collection
 const commandPath = './commands';
 const commandFiles = fs.readdirSync(commandPath);
 
 for (let i = 0; i < commandFiles.length; i++) {
 	const commandName = path.parse(commandFiles[i]).name;
-	console.log(commandName);
 	const commandFunc = require(`./commands/${commandName}`)
 	commandList.set(commandName, commandFunc);
 }
 
 
-// breaks down commands and checks for validity
+// breaks down user input, checks for validity, handles execution
 const commandChecker = (message) => {
 	// remove leading `!`
 	const cleanCommand = message.content.slice(1);
@@ -38,25 +40,14 @@ const commandChecker = (message) => {
 	const commandAndArg = splitUp.filter(Boolean);
 	// get command from collection
 	const command = commandList.get(commandAndArg[0])
-	
-	// conditional to hand invalid commands
-	// if (commands.includes(commandAndArg[0])) {
-		// return commandAndArg.length === 1 ? commandHandler(message, commandAndArg[0]) : commandHandler(message, commandAndArg[0], commandAndArg[1]);
-	// }
 
-	if (command) {
-		return `command exists :-0`
-	}
-	else {
+	if (!command) {
 		const miguel = getEmoji('Miguel');
 		message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n${miguel} Command '**${commandAndArg[0]}**' not recognized. Type **!commands** to see available commands.`);
 	}
-}
-
-
-// routes commands
-const commandHandler = (message, command, arg) => {
- // command routing logic here 
+	else {
+		commandAndArg.length > 1 ? command(message, commandAndArg[1]) : command(message)
+	}
 }
 
 

@@ -10,7 +10,7 @@ module.exports = logger = winston.createLogger({
         })
     ),
     transports: [new winston.transports.File({
-      filename: 'info.log',
+      filename: process.env.PROD_ENV ? 'info.log' : 'dev.log',
       level: 'info'
     })]
 });

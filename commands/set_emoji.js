@@ -20,7 +20,7 @@ module.exports = (message, arg) => {
 	else {
 		const isEmoji = !!getEmoji(arg);
 		if (isEmoji) {
-			const emoji = isEmoji.toString();
+			const emoji = getEmoji(arg);
 			usersDB.setUserEmoji(emoji, id)
 				.then(res => {
 					message.channel.send(`**Emoji set** to ${emoji}`);
