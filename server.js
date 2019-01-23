@@ -179,12 +179,6 @@ const commandHandler = (message, command, arg) => {
 }
 
 
-client.on('ready', () => {
-	console.log('Discord client ready');
-	logger.log('info', 'Discord client ready');
-});
-
-
 client.on('message', (message) => {
 	const minutePosted = message.createdAt.getMinutes() === 43 || message.createdAt.getMinutes() === 44 ? message.createdAt.getMinutes() : null;
 	const poster = message.author.id.toString();
@@ -218,6 +212,12 @@ client.on('message', (message) => {
 	if (message.content.startsWith('!')) {
 		commandChecker(message);
 	}
+});
+
+
+client.on('ready', () => {
+	console.log('Discord client ready');
+	logger.log('info', 'Discord client ready');
 });
 
 client.on('reconnecting', () => {
