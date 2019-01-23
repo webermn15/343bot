@@ -1,50 +1,33 @@
 require('dotenv').config();
-const sqlite3 = require('sqlite3').verbose();
-const Promise = require('bluebird');
+const fs = require('fs');
+const path = require('path');
+const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const Discord = require('discord.js');
 const client = new Discord.Client();
 
+// db imports
+const { attemptsDB, usersDB } = require('./db');
+
 // utils
-// for logging
-const winston = require('winston');
-const uuidv4 = require('uuid/v4');
-// for handling specific functions
-const boardMaker = require('./utils/boardMaker');
-const statMaker = require('./utils/statMaker');
+const { logger, getEmoji } = require('./utils');
+
+// collection for protecting against 343 spam
 const limitSpam = new Discord.Collection();
-// setup winston logger
-const logger = winston.createLogger({
-    level: 'info',
-    format: winston.format.combine(
-        winston.format.timestamp(),
-        winston.format.printf(info => {
-            return `${info.timestamp} ${info.level}: ${info.message}`;
-        })
-    ),
-    transports: [new winston.transports.File({
-      filename: 'info.log',
-      level: 'info'
-    })]
+
+
+// import and format commands
+const commandPath = './commands';
+const commandFiles = fs.readdirSync(commandPath);
+
+const commands = commandFiles.map(command => {
+	return {
+		[path.parse(command).name]: require(`./commands/${command}`)
+	}
 });
 
+console.log(commands);
 
-// db class declarations 
-const AppDB = require('./db/AppDB');
-const Users = require('./db/Users');
-const Attempts = require('./db/Attempts');
-
-// instantiate db classes
-const sqliteDB = './db/live.db';
-const app = new AppDB(sqliteDB);
-const usersDB = new Users(app);
-const attemptsDB = new Attempts(app);
-
-
-// emoji query HoF
-const getEmoji = (emj) => client.emojis.find(v => v.name === emj).toString();
-// rounding to 2 decimals HoF
-const roundResult = (num) => Math.round(num * 100) / 100;
 
 // breaks down commands and checks for validity
 const commandChecker = (message) => {
@@ -68,114 +51,10 @@ const commandChecker = (message) => {
 	}
 }
 
-// queries data and assembles response
-// this is mostly if else statements and really annoying template literal formatting
+
+// routes commands
 const commandHandler = (message, command, arg) => {
-	if (command === 'commands') {
-		message.channel.send('\`\`\`md\n# Available Commands\n< !stats => returns your 343 statistics\n< !set_emoji [emoji] => associates an [emoji] with your results, or removes one when called with no argument\n< !leaderboard => returns server 343 leaderboard\n< !failureboard => returns server 343 failureboard\n< !last => returns all attempts at the most recent possible 343, including seconds remaining\`\`\`');
-
-	}
-	else if (command === 'stats') {
-		const id = message.author.id.toString();
-		usersDB.getUserStats(id)
-			.then(res => {
-				const user = statMaker(res)[0];
-				const dame = getEmoji('TheReal5');
-				const scruntgasm = getEmoji('scruntGASM');
-				const notLikeDame = getEmoji('NotLikeDame');
-				const monkaS = getEmoji('monkaS');
-				const pog = getEmoji('Pog');
-				message.channel.send('\`\`\`md\n#343 Stats\`\`\`' + 
-					`${user.emoji ? user.emoji : ''} **${user.username}** \n${dame} **Total 343s** -- ${user.success}\n${scruntgasm} **Avg seconds left in 343** -- ${user.seconds_left.length > 0 ? roundResult(user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length) : 'User has not hit any 343'}s\n${notLikeDame} **Total 344s** -- ${user.failed}\n${monkaS} **Avg seconds 343 missed by** -- ${user.seconds_missed.length > 0 ? roundResult(user.seconds_missed.reduce((x, y) => x + y)/user.seconds_missed.length) : 'User has not hit any 344'}s\n`);
-			})
-			.catch(err => {
-				errId = uuidv4();
-				logger.log('error', `${err} , id:${errId}`);
-				const sponge = getEmoji('spongebob_with_a_gun');
-				message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n${sponge} **There was an error retrieving your stats.**\nYou may not have any 343 data available!! If you think this is an error please message webs, I'm just doing my job.\n\nid: ${errId}`);
-			});
-
-	}
-	else if (command === 'set_emoji') {
-		const id = message.author.id.toString();
-		if (!arg) {
-			usersDB.setUserEmoji(null, id)
-				.then(res => {
-					message.channel.send(`**Emoji removed.**`);
-				})
-				.catch(err => {
-					errId = uuidv4();
-					logger.log('error', `${err} , id:${errId}`);
-					message.channel.send(`**Something went wrong!** I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
-				});
-		}
-		else {
-			const isEmoji = client.emojis.find(v => v.name === arg);
-			if (isEmoji) {
-				const emoji = isEmoji.toString();
-				usersDB.setUserEmoji(emoji, id)
-					.then(res => {
-						message.channel.send(`**Emoji set** to ${emoji}`);
-					})
-					.catch(err => {
-						errId = uuidv4();
-						logger.log('error', `${err} , id:${errId}`);
-						message.channel.send(`**Something went wrong!** I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
-					});
-			}
-			else {
-				message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n**That's not a recognized server emoji!**\n(Capitalization matters, this server's emojis only, no colons wrapping the emoji name)`);
-			}
-		}
-	}
-	else if (command === 'leaderboard') {
-		attemptsDB.leaderboard()
-			.then(res => {
-				const formattedLeaderboard = boardMaker(res).sort((x, y) => y.success - x.success);
-				message.channel.send('\`\`\`md\n<Leaderboard < Successful attempts > < Avg secs left >\`\`\`' + 
-					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} **${user.username}** ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'--------------------'} ${user.seconds_left.length > 0 ? roundResult(user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length) : 'User has not hit any 343'}s \n\n`).join('')}`);})
-			.catch(err => {
-				errId = uuidv4();
-				logger.log('error', `${err} , id:${errId}`);
-				message.channel.send(`**Something went wrong!** I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
-			});
-
-	}
-	else if (command === 'failureboard') {
-		attemptsDB.failureboard()
-			.then(res => {
-				const formattedLeaderboard = boardMaker(res, true).sort((x, y) => y.success - x.success);
-				message.channel.send('\`\`\`md\n<Failureboard < Failed attempts > < Avg secs missed by >\`\`\`' + 
-					`\n${formattedLeaderboard.map((user, i) => `${user.emoji ? user.emoji : '[' + (i + 1) + ']:'} **${user.username}** ${'-----------------------------------'.slice(user.username.length)} ${user.success} ${'--------------------'} ${user.seconds_left.length > 0 ? roundResult(user.seconds_left.reduce((x, y) => x + y)/user.seconds_left.length) : 'User has not hit any 344'}s \n\n`).join('')}`);})
-			.catch(err => {
-				errId = uuidv4();
-				logger.log('error', `${err} , id:${errId}`);
-				message.channel.send(`Something went wrong! I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
-			});
-
-	}
-	else if (command === 'last') {
-		attemptsDB.mostRecentAttempts()
-			.then(res => {
-				if (res.length > 0) {
-					const evoMindFlwns = getEmoji('evoMindFlwns');
-					const pepeHands = getEmoji('PepeHands');
-					message.channel.send('\`\`\`md\n#Last 343 results\`\`\`' + `${res.map(attempt => {
-						return `${attempt.emoji ? attempt.emoji : ''} **${attempt.username}** ${attempt.success ? 'made' : 'missed' } 343 by ${attempt.seconds_left} seconds${attempt.success ? '! ' : '... '} ${attempt.success ? evoMindFlwns : pepeHands}\n`
-					}).join('')}`)
-				}
-				else {
-					const emoji = getEmoji('hlizard');
-					message.channel.send('\`\`\`md\n#Last 343 results\`\`\`' + `\n${emoji} **Nobody attempted the last 343!** ${emoji}`);
-				}
-			})
-			.catch(err => {
-				errId = uuidv4();
-				logger.log('error', `${err} , id:${errId}`);
-				message.channel.send(`Something went wrong! I dunno, ask webs, I'm just a bot.\nid: ${errId}`);
-			});
-
-	}
+ // command routing logic here 
 }
 
 

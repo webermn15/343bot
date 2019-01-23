@@ -2,7 +2,7 @@ const uuidv4 = require('uuid/v4');
 
 // db & utils
 const { usersDB } = require('../db');
-const { getEmoji, statMaker } = require('../utils');
+const { getEmoji, statMaker, logger } = require('../utils');
 
 module.exports = message => {
 	const id = message.author.id.toString();
