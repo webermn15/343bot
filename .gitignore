@@ -1,4 +1,4 @@
 node_modules
 .env
 info.log
-db/*.db
+db/live.db

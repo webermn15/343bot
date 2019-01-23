@@ -8,8 +8,10 @@ SELECT username, time_zone, date_posted, seconds_left, true_post FROM attempts I
 INSERT INTO users(user_id, username, time_zone) VALUES('86272465868701696','web','GMT-0600 (CST)')
   ON CONFLICT(user_id) DO UPDATE SET username=excluded.username;
 
+INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VALUES ('248904885859385355', '2019-01-22 00:01:55', 15, 1, 0);
+
 /* SELECT recent 343 using datetime method */
-SELECT * FROM attempts WHERE date_posted >= datetime('now','-1 hour');
+SELECT * FROM attempts WHERE date_posted >= datetime('now','-1.5 hours');
 
 /* INSERT fake date for testing */
 INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VALUES ('86272465868701696', '2019-01-17 13:44:00', 30, false, false);
