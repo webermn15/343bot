@@ -12,39 +12,41 @@ const { attemptsDB, usersDB } = require('./db');
 // utils
 const { logger, getEmoji } = require('./utils');
 
-// collection for protecting against 343 spam
+// collection declarations
 const limitSpam = new Discord.Collection();
-
+const commandList = new Discord.Collection();
 
 // import and format commands
 const commandPath = './commands';
 const commandFiles = fs.readdirSync(commandPath);
 
-const commands = commandFiles.map(command => {
-	return {
-		[path.parse(command).name]: require(`./commands/${command}`)
-	}
-});
-
-console.log(commands);
+for (let i = 0; i < commandFiles.length; i++) {
+	const commandName = path.parse(commandFiles[i]).name;
+	console.log(commandName);
+	const commandFunc = require(`./commands/${commandName}`)
+	commandList.set(commandName, commandFunc);
+}
 
 
 // breaks down commands and checks for validity
 const commandChecker = (message) => {
-	// array of available commands
-	const commands = ['commands', 'stats', 'set_emoji', 'leaderboard', 'failureboard', 'last']
-
 	// remove leading `!`
 	const cleanCommand = message.content.slice(1);
 	// split up words based on spaces
 	const splitUp = cleanCommand.split(' ');
 	// remove empty strings
 	const commandAndArg = splitUp.filter(Boolean);
+	// get command from collection
+	const command = commandList.get(commandAndArg[0])
 	
 	// conditional to hand invalid commands
-	if (commands.includes(commandAndArg[0])) {
-		return commandAndArg.length === 1 ? commandHandler(message, commandAndArg[0]) : commandHandler(message, commandAndArg[0], commandAndArg[1]);
-	} 
+	// if (commands.includes(commandAndArg[0])) {
+		// return commandAndArg.length === 1 ? commandHandler(message, commandAndArg[0]) : commandHandler(message, commandAndArg[0], commandAndArg[1]);
+	// }
+
+	if (command) {
+		return `command exists :-0`
+	}
 	else {
 		const miguel = getEmoji('Miguel');
 		message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n${miguel} Command '**${commandAndArg[0]}**' not recognized. Type **!commands** to see available commands.`);
