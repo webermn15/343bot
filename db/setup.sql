@@ -14,8 +14,8 @@ INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VAL
 SELECT * FROM attempts WHERE date_posted >= datetime('now','-1.5 hours');
 
 /* INSERT fake date for testing */
-INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VALUES ('86272465868701696', '2019-01-17 13:44:00', 30, false, false);
-INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VALUES ('86272465868701696', '2019-01-17 15:43:01', 30, true, true);
+INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VALUES ('103247421944918016', '2019-01-17 13:44:00', 30, false, false);
+INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VALUES ('103684555923296256', '2019-01-17 15:43:01', 30, true, true);
 INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VALUES ('86272465868701696', '2019-01-17 12:44:34', 30, false, false);
 INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VALUES ('86272465868701696', '2019-01-17 11:44:00', 30, false, false);
 INSERT INTO attempts (poster, date_posted, seconds_left, success, true_post) VALUES ('86272465868701696', '2019-01-17 08:43:01', 30, true, true);
