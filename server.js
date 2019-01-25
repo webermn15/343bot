@@ -43,7 +43,11 @@ const commandChecker = (message) => {
 
 	if (!command) {
 		const miguel = getEmoji('Miguel');
-		message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n${miguel} Command '**${commandAndArg[0]}**' not recognized. Type **!commands** to see available commands.`);
+		message.channel.send('\`\`\`md\n#Error\`\`\`' + `\n${miguel} Command '**${commandAndArg[0]}**' not recognized. Type **!commands** to see available commands.`)
+			.catch(err => {
+				errId = uuidv4();
+				logger.log('error', `${err} , id:${errId}`);
+			})
 	}
 	else {
 		commandAndArg.length > 1 ? command(message, commandAndArg[1]) : command(message)
@@ -81,7 +85,7 @@ client.on('message', (message) => {
 			});
 	}
 
-	if (message.content.startsWith('!')) {
+	if (message.content.startsWith('!') && message.content.length >= 2) {
 		commandChecker(message);
 	}
 });
