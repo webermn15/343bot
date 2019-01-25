@@ -5,10 +5,14 @@ const checkEmoji = emojiRegex();
 const client = require('../server');
 
 module.exports = getEmoji = (emj) => {
+	const stringEmoji = client.emojis.find(v => v.name === emj);
 	const standardEmoji = checkEmoji.exec(emj);
 	const parseServerEmoji = emj.match(/\:(.*?)\:/);
 	const serverEmoji = !parseServerEmoji ? null : client.emojis.find(v => v.name === parseServerEmoji[1]);
 	let returnedEmoji = null;
+	if (!!stringEmoji === true) {
+		returnedEmoji = stringEmoji.toString();
+	} 
 	if (!!standardEmoji === true) {
 		returnedEmoji = standardEmoji[0];
 	}
